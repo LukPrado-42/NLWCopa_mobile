@@ -3,6 +3,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { api } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -24,12 +25,29 @@ export interface AuthContextDataProps {
 
 export const AuthContext = createContext({} as AuthContextDataProps);
 
+export async function loadUserToken(context: AuthContextDataProps){   
+
+    const value = await AsyncStorage.getItem('@storage_Key:Token');
+    console.log("valor Storage token:",value);
+
+    if(value !== null) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${value}`;
+        const userInfoResponse = await api.get('/me');
+        context.user = userInfoResponse.data.user;
+        return context;                    
+    }
+    else{
+        return context;  
+    }; 
+};
+
+
 export function AuthContextProvider({ children }: AuthProviderProps) {
     const [ user, setUser ] = useState<UserProps>({} as UserProps);
     const [ isUserLoading, setIsUserLoading ] = useState(false);
 
     const [request, response, promptAsync] = Google.useAuthRequest({
-        clientId: "373491366277-54pjnaeot238q7dr04695jrtk1bi5c54.apps.googleusercontent.com",
+        clientId: process.env.CLIENT_ID,
         redirectUri: AuthSession.makeRedirectUri({ useProxy: true }),
         scopes: ["profile", "email"]
     });
@@ -47,7 +65,6 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
     };
 
     async function signInWithGoogle(access_token: string) {
-        console.log("TOKEN DE AUTENTICAÇÃO ===>", access_token);                    //!lembrar de retirar
         try {
             setIsUserLoading(true);
 
@@ -66,10 +83,24 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
     }
 
     useEffect(() => {
-        if(response?.type === "success" && response.authentication?.accessToken ) {
+        if(response?.type === 'success' && response.authentication?.accessToken){
             signInWithGoogle(response.authentication.accessToken);
         }
-    }, [response])
+        (async () => {
+            try {
+                const value = await AsyncStorage.getItem('Token')   
+                console.log('Valor storage: ',value)
+                if(value){
+                    api.defaults.headers.common['Authorization'] = `Bearer ${value}`;
+                    const userInfoResponse = await api.get('/me');
+                    setUser(userInfoResponse.data.user);
+                }
+            } catch(e) {
+                console.log("Erro ao consultar storage!")
+            }
+        }   
+        )();          
+    },[response]);
 
     return(
         <AuthContext.Provider value={{
