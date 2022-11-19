@@ -8,9 +8,10 @@ import { Loading } from './Loading';
 
 interface Props {
   poolId: string;
+  code: string;
 }
 
-export function Guesses({ poolId }: Props) {
+export function  Guesses({ poolId }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [games, setGames] = useState<GameProps[]>([]);
   const [firstTeamPoints, setFirstTeamPoints] = useState("");
@@ -47,7 +48,7 @@ export function Guesses({ poolId }: Props) {
           bgColor: "red.500"
         });
       };
-
+      setIsLoading(true);
       await api.post(`/pools/${poolId}/games/${gameId}/guesses`, {
         firstTeamPoints: Number(firstTeamPoints),
         secondTeamPoints: Number(secondTeamPoints),
@@ -68,6 +69,8 @@ export function Guesses({ poolId }: Props) {
           placement: "top",
           bgColor: "red.500"
       });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -88,9 +91,11 @@ export function Guesses({ poolId }: Props) {
           data={item}
           setFirstTeamPoints={setFirstTeamPoints}
           setSecondTeamPoints={setSecondTeamPoints}
+          isLoading = {isLoading}
           onGuessConfirm={() => handleGuessConfirm(item.id) }
         />
       )}
+      _contentContainerStyle={{ pb: 40 }}
     />
   );
 };

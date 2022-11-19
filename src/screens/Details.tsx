@@ -12,6 +12,7 @@ import { PoolHeader } from '../components/PoolHeader';
 import { EmptyMyPoolList } from '../components/EmptyMyPoolList';
 import { Option } from '../components/Option';
 import { Guesses } from '../components/Guesses';
+import { Ranking } from '../components/Ranking';
 
 interface RouteParams {
     id: string;
@@ -90,7 +91,17 @@ export function Details() {
                         />
                     </HStack>
 
-                    <Guesses poolId={poolDetails.id} />
+                    {
+                        optionSelected === "guesses" ?
+                        <Guesses 
+                            poolId={poolDetails.id} 
+                            code={poolDetails.code}
+                        /> :
+                        <Ranking 
+                            poolId={poolDetails.id}
+                        />
+                    }
+
                 </VStack>
                 : 
                 <EmptyMyPoolList 
@@ -98,7 +109,6 @@ export function Details() {
                     onShare={handleCodeShare}
                 />
             }
-    
 
         </VStack>
     );

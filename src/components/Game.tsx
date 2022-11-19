@@ -1,6 +1,6 @@
 import { Button, HStack, Text, useTheme, VStack } from 'native-base';
 import { X, Check } from 'phosphor-react-native';
-import { getName } from 'country-list';
+import { getName, overwrite } from 'country-list';
 import dayjs from 'dayjs';
 import ptBR from 'dayjs/locale/pt-br';
 
@@ -20,19 +20,30 @@ export interface GameProps {
   date: string;
   firstTeamCountryCode: string;
   secondTeamCountryCode: string;
+  firstTeamFinalScore: string;
+  secondTeamFinalScore: string;
   guess: null | GuessProps;
+  gameStage: string;
 };
 
 interface Props {
   data: GameProps;
+  isLoading: boolean;
   onGuessConfirm: () => void;
   setFirstTeamPoints: (value: string) => void;
   setSecondTeamPoints: (value: string) => void;
 };
 
-export function Game({ data, setFirstTeamPoints, setSecondTeamPoints, onGuessConfirm }: Props) {
+export function Game({ data, setFirstTeamPoints, setSecondTeamPoints, onGuessConfirm  }: Props) {
   const { colors, sizes } = useTheme();
-  const when = dayjs(data.date).locale(ptBR).format("DD [de] MMMM [de] YYYY [às] HH:00[h]")
+  const when = dayjs(data.date).locale(ptBR).format("DD [de] MMMM [de] YYYY [às] HH:00[h]");
+  {overwrite([{
+    code: "gb-wls",
+    name: "Wales"
+  },{
+    code: "gb-eng",
+    name: "England"
+  }])}
 
   return (
     <VStack
@@ -46,11 +57,11 @@ export function Game({ data, setFirstTeamPoints, setSecondTeamPoints, onGuessCon
       p={4}
     >
       <Text color="gray.100" fontFamily="heading" fontSize="sm">
-        {getName(data.firstTeamCountryCode)} vs. {getName(data.secondTeamCountryCode)}
+        {data.gameStage} - {getName(data.firstTeamCountryCode)} vs. {getName(data.secondTeamCountryCode)}
       </Text>
 
       <Text color="gray.200" fontSize="xs">
-        {when}
+      {when}
       </Text>
 
       <HStack mt={4} w="full" justifyContent="space-between" alignItems="center">
@@ -58,20 +69,39 @@ export function Game({ data, setFirstTeamPoints, setSecondTeamPoints, onGuessCon
           code={data.firstTeamCountryCode}
           position="right"
           onChangeText={setFirstTeamPoints}
+          value={data.guess ? String(data.guess.firstTeamPoints) : undefined }
         />
+        <Text color="gray.200" fontSize="xs">
+           {data.firstTeamFinalScore}
+        </Text>
 
         <X color={colors.gray[300]} size={sizes[6]} />
+
+        <Text color="gray.200" fontSize="xs">
+           {data.secondTeamFinalScore}
+        </Text>
 
         <Team
           code={data.secondTeamCountryCode}
           position="left"
           onChangeText={setSecondTeamPoints}
+          value={data.guess ? String(data.guess.secondTeamPoints) : undefined }
+
         />
       </HStack>
 
       {
         !data.guess &&
-        <Button size="xs" w="full" bgColor="green.500" mt={4} onPress={onGuessConfirm}>
+        <Button 
+          size="xs" 
+          w="full" 
+          bgColor="green.500" 
+          mt={4} onPress={onGuessConfirm}
+          isLoading = {false}
+          _loading={{
+            _spinner: { color: "white" }
+          }}
+        >
           <HStack alignItems="center">
             <Text color="white" fontSize="xs" fontFamily="heading" mr={3}>
               CONFIRMAR PALPITE

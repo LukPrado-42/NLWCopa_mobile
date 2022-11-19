@@ -2,6 +2,7 @@ import { Avatar, Center, HStack, Text } from 'native-base';
 
 export interface ParticipantProps {
   id: string;
+  guessPoints: number;
   user: {
     name: string;
     avatarUrl: string;
