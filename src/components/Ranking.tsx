@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast, FlatList } from 'native-base';
 
 import { api } from '../services/api';
@@ -6,7 +6,6 @@ import { api } from '../services/api';
 import { RankingCard, RankingCardProps } from './RankingCard';
 import { Loading } from './Loading';
 import { EmptyRakingList } from './EmptyRakingList';
-import { useFocusEffect } from '@react-navigation/native';
 
 interface Props {
     poolId: string;

@@ -2,8 +2,10 @@ import { createContext, ReactNode, useState, useEffect } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSessions from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { api } from '../services/api';
+import { useToast } from "native-base";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -15,6 +17,7 @@ interface UserProps {
 export interface AuthContextDataProps {
   user: UserProps;
   signIn: () => Promise<void>;
+  signInWithStorageToken: () => Promise<void>;
   isUserLoading: boolean;
 }
 
@@ -28,6 +31,7 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [user, setUser] = useState<UserProps>({} as UserProps);
 
+  const toast = useToast();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: process.env.CLIENT_ID,
@@ -39,15 +43,19 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
     try {
       setIsUserLoading(true)
       await promptAsync();
+
     } catch (error) {
       console.log(error);
       throw error;
+
     } finally {
       setIsUserLoading(false);
     }
   }
 
   async function signInWithGoogle(access_token: string) {
+    await AsyncStorage.setItem('@nlw-copa:user-token', access_token);
+    
     try {
       setIsUserLoading(true);
       
@@ -56,23 +64,41 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
 
       const userInfoResponse = await api.get('/me');
       setUser(userInfoResponse.data.user);
+
     } catch (error) {
       console.log(error);
       throw error;
+
     } finally {
       setIsUserLoading(false);
+    }
+  };
+
+  async function signInWithStorageToken() {
+    try {
+      setIsUserLoading(true)
+
+      const access_token = await AsyncStorage.getItem('@nlw-copa:user-token')
+      if(access_token !== null) {
+        return signInWithGoogle(access_token)
+      }
+    } catch (error) {} finally {
+      setIsUserLoading(false)
     }
   }
 
   useEffect(() => {
-    if(response?.type === 'success' && response.authentication?.accessToken) {
-        signInWithGoogle(response.authentication.accessToken);
-    }
-  },[response])
+    if(response?.type === 'success' && response.authentication?.accessToken){
+      signInWithGoogle(response.authentication.accessToken);
+    }          
+  },[response]);
+
+
 
   return (
     <AuthContext.Provider value={{
-    signIn,
+      signIn,
+      signInWithStorageToken,
       isUserLoading,
       user,
     }}>

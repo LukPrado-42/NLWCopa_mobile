@@ -5,9 +5,14 @@ import Logo from '../assets/logo.svg';
 import { useAuth } from '../hooks/useAuth'
 
 import { Button } from "../components/Button";
+import { useEffect } from 'react';
 
 export function SignIn() {
-    const { signIn, isUserLoading } = useAuth();
+    const { signIn, isUserLoading, signInWithStorageToken } = useAuth();
+
+    useEffect(() => {
+        signInWithStorageToken()
+    }, [])
 
     return(
     <Center flex={1} bgColor="gray.900" p={7}>
